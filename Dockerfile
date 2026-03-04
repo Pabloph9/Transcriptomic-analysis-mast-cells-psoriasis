@@ -1,5 +1,5 @@
 # ============================================================
-# Dockerfile - RNA-seq Mast Cell Pipeline
+# Dockerfile: RNA-seq Mast Cell Pipeline
 # R version: 4.3.3
 # Bioconductor: 3.18
 # ============================================================

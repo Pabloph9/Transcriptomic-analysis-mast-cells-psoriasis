@@ -1,5 +1,5 @@
 # ============================================================
-# Dockerfile - RNA-seq Mast Cell Pipeline
+# Dockerfile - RNA-seq Mast Cell Psoriasis Pipeline
 # R version: 4.3.3
 # Bioconductor: 3.18
 # ============================================================
@@ -9,8 +9,8 @@
 
 FROM rocker/tidyverse:4.3.3
 
-LABEL maintainer="Pablo Rafael Pombero Hurtado"
-LABEL description="Reproducible RNA-seq pipeline environment (Salmon + DESeq2 + Functional Analysis)"
+LABEL maintainer=""
+LABEL description="Reproducible RNA-seq pipeline environment"
 
 
 # 2. Freeze CRAN snapshot (21 Feb 2026)

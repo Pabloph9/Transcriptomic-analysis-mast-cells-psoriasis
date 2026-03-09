@@ -10,43 +10,19 @@ params.outdir = "results"
 
 /*
 --------------------------------------------------------
-Workflow
---------------------------------------------------------
-*/
-
-workflow {
-
-    start_ch = Channel.value(1)
-
-    preprocessing_out = preprocessing(start_ch)
-
-    quant_out = quantification(preprocessing_out)
-
-    pca_out = tximport_pca(quant_out)
-
-    deg_out = deseq2(pca_out)
-
-    enrichment(deg_out)
-
-}
-
-
-/*
---------------------------------------------------------
 Preprocessing
 Download FASTQ, QC and trimming
 --------------------------------------------------------
 */
-
 process preprocessing {
 
-    publishDir "${params.outdir}/logs", mode: 'copy'
+    publishDir "${params.outdir}/tmp_trimmed", mode: 'copy'
 
     input:
     val start
 
     output:
-    path "results/tmp_trimmed"
+    path "*.fq.gz", emit: ch_trimmed_reads
 
     script:
     """
@@ -54,22 +30,20 @@ process preprocessing {
     """
 }
 
-
 /*
 --------------------------------------------------------
 Salmon quantification
 --------------------------------------------------------
 */
-
 process quantification {
 
     publishDir "${params.outdir}/salmon_quants", mode: 'copy'
 
     input:
-    path trimmed_reads
+    path ch_trimmed_reads
 
     output:
-    path "results/salmon_quants"
+    path "*.sf", emit: ch_quants
 
     script:
     """
@@ -77,20 +51,20 @@ process quantification {
     """
 }
 
-
 /*
 --------------------------------------------------------
 Tximport + PCA
 --------------------------------------------------------
 */
-
 process tximport_pca {
 
+    publishDir "${params.outdir}/figures", mode: 'copy'
+
     input:
-    path quants
+    path ch_quants
 
     output:
-    path "results/figures"
+    path "*.png", emit: ch_figures
 
     script:
     """
@@ -98,20 +72,20 @@ process tximport_pca {
     """
 }
 
-
 /*
 --------------------------------------------------------
 Differential expression
 --------------------------------------------------------
 */
-
 process deseq2 {
 
+    publishDir "${params.outdir}/tables", mode: 'copy'
+
     input:
-    path figures
+    path ch_figures
 
     output:
-    path "results/tables"
+    path "*.csv", emit: ch_tables_out
 
     script:
     """
@@ -119,23 +93,39 @@ process deseq2 {
     """
 }
 
-
 /*
 --------------------------------------------------------
 Functional enrichment
 --------------------------------------------------------
 */
-
 process enrichment {
 
+    publishDir "${params.outdir}/figures/kegg_maps", mode: 'copy'
+
     input:
-    path tables
+    path ch_tables_out
 
     output:
-    path "results/figures/kegg_maps"
+    path "kegg_results/*", emit: ch_enrichment
 
     script:
     """
     Rscript scripts/05_functional_enrichment.R
     """
+}
+
+/*
+--------------------------------------------------------
+Workflow
+--------------------------------------------------------
+*/
+workflow {
+
+    start_ch = Channel.value(1)
+
+    trimmed_ch = preprocessing(start_ch)
+    quant_ch   = quantification(trimmed_ch)
+    figures_ch = tximport_pca(quant_ch)
+    tables_ch  = deseq2(figures_ch)
+    enrichment(tables_ch)
 }
